@@ -1,6 +1,6 @@
 package com.commerce.domain.account;
 
-import com.commerce.common.BaseEntity;
+import com.commerce.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,10 +8,9 @@ import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import org.hibernate.annotations.Where;
 
-@Where(clause = "deleted is False")
+@Where(clause = "deleted is false")
 @Getter
 @Entity
 @NoArgsConstructor

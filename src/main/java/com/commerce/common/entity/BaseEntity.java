@@ -1,4 +1,4 @@
-package com.commerce.common;
+package com.commerce.common.entity;
 
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;

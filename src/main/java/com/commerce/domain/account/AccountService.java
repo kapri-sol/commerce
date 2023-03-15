@@ -2,6 +2,7 @@ package com.commerce.domain.account;
 
 import com.commerce.domain.account.dto.CreateAccountDto;
 import com.commerce.domain.account.dto.UpdateAccountDto;
+import com.commerce.exception.UniqueConstraintViolationException;
 import jakarta.persistence.NoResultException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,16 @@ public class AccountService {
     }
 
     Long createAccount(CreateAccountDto createAccountDto) {
+        Optional<Account> duplicatedAccount = accountRepository.findByEmailOrNameOrPhoneNumber(
+                createAccountDto.getEmail(),
+                createAccountDto.getName(),
+                createAccountDto.getPhoneNumber()
+        );
+
+        if (duplicatedAccount.isPresent()) {
+            throw new UniqueConstraintViolationException();
+        }
+
         Account createAccount = Account.builder()
                 .email(createAccountDto.getEmail())
                 .name(createAccountDto.getName())
