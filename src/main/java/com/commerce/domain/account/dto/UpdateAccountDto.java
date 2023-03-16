@@ -8,13 +8,11 @@ import lombok.NoArgsConstructor;
 @Data
 public class UpdateAccountDto {
     String phoneNumber;
-    String name;
     String password;
 
     @Builder
-    public UpdateAccountDto(String phoneNumber, String name, String password) {
+    public UpdateAccountDto(String phoneNumber, String password) {
         this.phoneNumber = phoneNumber;
-        this.name = name;
         this.password = password;
     }
 }

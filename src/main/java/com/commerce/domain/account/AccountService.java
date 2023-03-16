@@ -7,6 +7,7 @@ import jakarta.persistence.NoResultException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -19,19 +20,22 @@ public class AccountService {
     }
 
     Long createAccount(CreateAccountDto createAccountDto) {
-        Optional<Account> duplicatedAccount = accountRepository.findByEmailOrNameOrPhoneNumber(
+        Optional<Account> duplicatedAccount = accountRepository.findAccountByUsernameOrEmailOrPhoneNumber(
+                createAccountDto.getUsername(),
                 createAccountDto.getEmail(),
-                createAccountDto.getName(),
                 createAccountDto.getPhoneNumber()
         );
 
         if (duplicatedAccount.isPresent()) {
-            throw new UniqueConstraintViolationException();
+            String field = Objects.equals(duplicatedAccount.get().getUsername(), createAccountDto.getUsername()) ? "username" :
+                    Objects.equals(duplicatedAccount.get().getEmail(), createAccountDto.getEmail()) ?  "email" : "phoneNumber";
+
+            throw new UniqueConstraintViolationException(field);
         }
 
         Account createAccount = Account.builder()
                 .email(createAccountDto.getEmail())
-                .name(createAccountDto.getName())
+                .username(createAccountDto.getUsername())
                 .password(createAccountDto.getPassword())
                 .build();
         Account account = accountRepository.save(createAccount);
@@ -40,7 +44,6 @@ public class AccountService {
 
     void updateAccount(Long accountId, UpdateAccountDto updateAccountDto) {
         Account account = accountRepository.findById(accountId).orElseThrow(NoResultException::new);
-        account.setName(updateAccountDto.getName());
         account.setPhoneNumber(updateAccountDto.getPhoneNumber());
         account.setPassword(updateAccountDto.getPassword());
         accountRepository.save(account);

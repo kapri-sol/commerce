@@ -1,10 +1,7 @@
 package com.commerce.domain.account;
 
 import com.commerce.common.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,8 +13,11 @@ import org.hibernate.annotations.Where;
 @NoArgsConstructor
 public class Account extends BaseEntity {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true)
+    private String username;
 
     @Column(unique = true)
     private String email;
@@ -25,22 +25,20 @@ public class Account extends BaseEntity {
     @Column(unique = true)
     private String phoneNumber;
 
-    private String name;
-
     private String password;
 
     private Boolean deleted = false;
 
     @Builder
-    Account(String email, String name, String phoneNumber, String password) {
+    Account(String email, String username, String phoneNumber, String password) {
         this.email = email;
-        this.name = name;
+        this.username = username;
         this.phoneNumber = phoneNumber;
         this.password = password;
     }
 
-    public void update(String name, String phoneNumber, String password) {
-        this.name = name;
+    public void update(String username, String phoneNumber, String password) {
+        this.username = username;
         this.phoneNumber = phoneNumber;
         this.password = password;
     }
@@ -50,8 +48,8 @@ public class Account extends BaseEntity {
         this.phoneNumber = phoneNumber;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public void setPassword(String password) {

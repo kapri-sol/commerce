@@ -2,7 +2,6 @@ package com.commerce.domain.account;
 
 import com.commerce.domain.account.dto.CreateAccountDto;
 import com.commerce.domain.account.dto.UpdateAccountDto;
-import com.commerce.dummy.DummyAccount;
 import com.commerce.exception.UniqueConstraintViolationException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
@@ -23,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Transactional
 @SpringBootTest
-class AccountServiceTest extends DummyAccount {
+class AccountServiceTest {
     @Autowired private AccountRepository accountRepository;
     @Autowired private AccountService accountService;
     @Autowired private EntityManager entityManager;
@@ -34,17 +33,24 @@ class AccountServiceTest extends DummyAccount {
     @DisplayName("계정을 검색한다.")
     @Test
     void findAccountById() {
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+
         // given
-        Account initAccount = accountRepository.save(generateAccount());
+        initialAccount = accountRepository.save(initialAccount);
 
         // when
-        Account account = accountService.findAccountById(initAccount.getId());
+        Account account = accountService.findAccountById(initialAccount.getId());
 
         // then
-        assertThat(account.getId()).isEqualTo(initAccount.getId());
-        assertThat(account.getName()).isEqualTo(initAccount.getName());
-        assertThat(account.getEmail()).isEqualTo(initAccount.getEmail());
-        assertThat(account.getPhoneNumber()).isEqualTo(initAccount.getPhoneNumber());
+        assertThat(account.getId()).isEqualTo(initialAccount.getId());
+        assertThat(account.getUsername()).isEqualTo(initialAccount.getUsername());
+        assertThat(account.getEmail()).isEqualTo(initialAccount.getEmail());
+        assertThat(account.getPhoneNumber()).isEqualTo(initialAccount.getPhoneNumber());
     }
 
     @DisplayName("존재하지 않는 계정을 검색하면 NoResultException 예외가 발생한다.")
@@ -67,7 +73,7 @@ class AccountServiceTest extends DummyAccount {
                 .builder()
                 .email(faker.internet().emailAddress())
                 .phoneNumber(faker.phoneNumber().phoneNumber())
-                .name(faker.name().fullName())
+                .username(faker.name().username())
                 .password(faker.internet().password())
                 .build();
 
@@ -89,13 +95,18 @@ class AccountServiceTest extends DummyAccount {
     @Test
     void createAccountByDuplicatedEmail() {
         // given
-        Account initAccount = generateAccount();
-        accountRepository.save(initAccount);
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+        accountRepository.save(initialAccount);
 
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
-                .email(initAccount.getEmail())
+                .email(initialAccount.getEmail())
                 .phoneNumber(faker.phoneNumber().phoneNumber())
-                .name(faker.name().fullName())
+                .username(faker.name().username())
                 .password(faker.internet().password())
                 .build();
 
@@ -106,13 +117,18 @@ class AccountServiceTest extends DummyAccount {
     @Test
     void createAccountByDuplicatedPhoneNumber() {
         // given
-        Account initAccount = generateAccount();
-        accountRepository.save(initAccount);
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+        accountRepository.save(initialAccount);
 
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
+                .username(faker.name().username())
                 .email(faker.internet().emailAddress())
-                .phoneNumber(initAccount.getPhoneNumber())
-                .name(faker.name().fullName())
+                .phoneNumber(initialAccount.getPhoneNumber())
                 .password(faker.internet().password())
                 .build();
 
@@ -123,13 +139,19 @@ class AccountServiceTest extends DummyAccount {
     @Test
     void createAccountByDuplicatedName() {
         // given
-        Account initAccount = generateAccount();
-        accountRepository.save(initAccount);
-
-        CreateAccountDto createAccountDto = CreateAccountDto.builder()
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
                 .email(faker.internet().emailAddress())
                 .phoneNumber(faker.phoneNumber().phoneNumber())
-                .name(initAccount.getName())
+                .password(faker.internet().password())
+                .build();
+
+        initialAccount = accountRepository.save(initialAccount);
+
+        CreateAccountDto createAccountDto = CreateAccountDto.builder()
+                .username(initialAccount.getUsername())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
                 .password(faker.internet().password())
                 .build();
 
@@ -140,18 +162,23 @@ class AccountServiceTest extends DummyAccount {
     @Test
     void updateAccount() {
         // given
-        Account initAccount = accountRepository.save(generateAccount());
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+        accountRepository.save(initialAccount);
 
         UpdateAccountDto updateAccountDto = UpdateAccountDto.builder()
-                .name(faker.name().fullName())
                 .phoneNumber(faker.phoneNumber().phoneNumber())
                 .password(faker.internet().password())
                 .build();
 
         // when
-        accountService.updateAccount(initAccount.getId(), updateAccountDto);
+        accountService.updateAccount(initialAccount.getId(), updateAccountDto);
 
-        Account updatedAccount = accountRepository.findById(initAccount.getId()).get();
+        Account updatedAccount = accountRepository.findById(initialAccount.getId()).get();
 
         // then
         assertThat(updatedAccount).isNotNull();
@@ -164,7 +191,6 @@ class AccountServiceTest extends DummyAccount {
         Long accountId = 10000L;
 
         UpdateAccountDto updateAccountDto = UpdateAccountDto.builder()
-                .name(faker.name().fullName())
                 .phoneNumber(faker.phoneNumber().phoneNumber())
                 .password(faker.internet().password())
                 .build();
@@ -188,14 +214,20 @@ class AccountServiceTest extends DummyAccount {
     @Test
     void deleteAccountById() {
         // given
-        Account initAccount = accountRepository.save(generateAccount());
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+        accountRepository.save(initialAccount);
 
         // when
-        accountService.deleteAccountById(initAccount.getId());
+        accountService.deleteAccountById(initialAccount.getId());
         accountRepository.flush();
         entityManager.clear();
 
-        Optional<Account> deletedAccount = accountRepository.findById(initAccount.getId());
+        Optional<Account> deletedAccount = accountRepository.findById(initialAccount.getId());
 
         // then
         assertThat(deletedAccount.isEmpty()).isTrue();

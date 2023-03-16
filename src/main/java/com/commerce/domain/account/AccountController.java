@@ -20,7 +20,7 @@ public class AccountController {
         Account account = accountService.findAccountById(accountId);
         return FindAccountResponse.builder()
                 .email(account.getEmail())
-                .name(account.getName())
+                .username(account.getUsername())
                 .phoneNumber(account.getPhoneNumber())
                 .build();
     }
@@ -33,11 +33,13 @@ public class AccountController {
                 .build();
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("{id}")
     void  updateAccount(@PathVariable("id") Long accountId, @RequestBody UpdateAccountDto updateAccountDto) {
         accountService.updateAccount(accountId, updateAccountDto);
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{id}")
     void deleteAccount(@PathVariable("id") Long accountId) {
         accountService.deleteAccountById(accountId);
