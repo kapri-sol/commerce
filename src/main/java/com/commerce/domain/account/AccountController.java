@@ -4,6 +4,7 @@ import com.commerce.domain.account.dto.CreateAccountDto;
 import com.commerce.domain.account.dto.CreateAccountResponse;
 import com.commerce.domain.account.dto.FindAccountResponse;
 import com.commerce.domain.account.dto.UpdateAccountDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class AccountController {
     }
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    CreateAccountResponse createAccount(@RequestBody CreateAccountDto createAccountDto) {
+    CreateAccountResponse createAccount(@RequestBody @Valid CreateAccountDto createAccountDto) {
         Long accountId = accountService.createAccount(createAccountDto);
         return CreateAccountResponse.builder()
                 .accountId(accountId)

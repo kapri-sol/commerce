@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 
 @Slf4j
 public class CustomResponseUtil {
@@ -14,9 +15,8 @@ public class CustomResponseUtil {
             CustomErrorResponse errorResponse = CustomErrorResponse.builder()
                     .code("UnAuthenticated").message(message).build();
             String responseBody = objectMapper.writeValueAsString(errorResponse);
-            response.setContentType("application/json; charset=utf-8");
+            response.setContentType(MediaType.APPLICATION_JSON.toString());
             response.setStatus(HttpStatus.FORBIDDEN.value());
-            response.getWriter().println(responseBody);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
