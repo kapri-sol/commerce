@@ -27,6 +27,8 @@ public class Account extends BaseEntity {
 
     private String password;
 
+    private AccountRole role;
+
     private Boolean deleted = false;
 
     @Builder
@@ -35,6 +37,16 @@ public class Account extends BaseEntity {
         this.username = username;
         this.phoneNumber = phoneNumber;
         this.password = password;
+        this.role = AccountRole.USER;
+    }
+
+    @Builder
+    Account(String email, String username, String phoneNumber, String password, AccountRole role) {
+        this.email = email;
+        this.username = username;
+        this.phoneNumber = phoneNumber;
+        this.password = password;
+        this.role = role;
     }
 
     public void update(String username, String phoneNumber, String password) {

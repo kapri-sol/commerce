@@ -6,10 +6,11 @@ import com.commerce.exception.UniqueConstraintViolationException;
 import jakarta.persistence.NoResultException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
-import java.util.Optional;
 
+@Transactional
 @RequiredArgsConstructor
 @Service
 public class AccountService {
@@ -20,18 +21,15 @@ public class AccountService {
     }
 
     Long createAccount(CreateAccountDto createAccountDto) {
-        Optional<Account> duplicatedAccount = accountRepository.findAccountByUsernameOrEmailOrPhoneNumber(
+        accountRepository.findAccountByUsernameOrEmailOrPhoneNumber(
                 createAccountDto.getUsername(),
                 createAccountDto.getEmail(),
                 createAccountDto.getPhoneNumber()
-        );
-
-        if (duplicatedAccount.isPresent()) {
-            String field = Objects.equals(duplicatedAccount.get().getUsername(), createAccountDto.getUsername()) ? "username" :
-                    Objects.equals(duplicatedAccount.get().getEmail(), createAccountDto.getEmail()) ?  "email" : "phoneNumber";
-
+        ).ifPresent(duplicatedAccount -> {
+            String field = Objects.equals(duplicatedAccount.getUsername(), createAccountDto.getUsername()) ? "username" :
+                    Objects.equals(duplicatedAccount.getEmail(), createAccountDto.getEmail()) ?  "email" : "phoneNumber";
             throw new UniqueConstraintViolationException(field);
-        }
+        });
 
         Account createAccount = Account.builder()
                 .email(createAccountDto.getEmail())
@@ -44,6 +42,10 @@ public class AccountService {
 
     void updateAccount(Long accountId, UpdateAccountDto updateAccountDto) {
         Account account = accountRepository.findById(accountId).orElseThrow(NoResultException::new);
+         accountRepository.findAccountByPhoneNumberAndIdIsNot(updateAccountDto.getPhoneNumber(), accountId)
+                .ifPresent((duplicatedPhoneNumberAccount) ->  {
+                    throw new UniqueConstraintViolationException("phoneNumber");
+                });
         account.setPhoneNumber(updateAccountDto.getPhoneNumber());
         account.setPassword(updateAccountDto.getPassword());
         accountRepository.save(account);

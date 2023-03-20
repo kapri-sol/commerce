@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findAccountByUsernameOrEmailOrPhoneNumber(String username, String email, String phoneNumber);
+    Optional<Account> findAccountByPhoneNumberAndIdIsNot(String phoneNumber, Long id);
 }

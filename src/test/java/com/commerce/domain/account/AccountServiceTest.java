@@ -6,6 +6,7 @@ import com.commerce.exception.UniqueConstraintViolationException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import net.datafaker.Faker;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-
-
-
+import static org.assertj.core.api.Assertions.*;
 
 @Transactional
 @SpringBootTest
@@ -60,9 +57,9 @@ class AccountServiceTest {
         Long accountId = 10000L;
 
         // when
-        // then
-        assertThrows(NoResultException.class, ()-> accountService.findAccountById(accountId));
-
+        assertThatThrownBy(() -> accountService.findAccountById(accountId))
+                // then
+                .isInstanceOf(NoResultException.class);
     }
 
     @DisplayName("계정을 생성한다.")
@@ -83,13 +80,11 @@ class AccountServiceTest {
 
         // then
         assertThat(accountId).isNotNull();
-        assertThat(createdAccount).isNotNull();
         assertThat(createdAccount.getId()).isEqualTo(createdAccount.getId());
         assertThat(createdAccount.getEmail()).isEqualTo(createdAccount.getEmail());
         assertThat(createdAccount.getPhoneNumber()).isEqualTo(createdAccount.getPhoneNumber());
         assertThat(createdAccount.getPassword()).isEqualTo(createdAccount.getPassword());
     }
-
 
     @DisplayName("중복된 이메일로 계정을 생성한다.")
     @Test
@@ -110,7 +105,8 @@ class AccountServiceTest {
                 .password(faker.internet().password())
                 .build();
 
-        assertThrows(UniqueConstraintViolationException.class,() -> accountService.createAccount(createAccountDto));
+        assertThatThrownBy(() -> accountService.createAccount(createAccountDto))
+                .isInstanceOf(UniqueConstraintViolationException.class);
     }
 
     @DisplayName("중복된 휴대폰번호로 계정을 생성한다.")
@@ -132,7 +128,8 @@ class AccountServiceTest {
                 .password(faker.internet().password())
                 .build();
 
-        assertThrows(UniqueConstraintViolationException.class,() -> accountService.createAccount(createAccountDto));
+        assertThatThrownBy(() -> accountService.createAccount(createAccountDto))
+                .isInstanceOf(UniqueConstraintViolationException.class);
     }
 
     @DisplayName("중복된 이름으로 계정을 생성한다.")
@@ -154,8 +151,10 @@ class AccountServiceTest {
                 .phoneNumber(faker.phoneNumber().phoneNumber())
                 .password(faker.internet().password())
                 .build();
-
-        assertThrows(UniqueConstraintViolationException.class,() -> accountService.createAccount(createAccountDto));
+        // when
+        assertThatThrownBy(() -> accountService.createAccount(createAccountDto))
+                // then
+                .isInstanceOf(UniqueConstraintViolationException.class);
     }
 
     @DisplayName("계정을 수정한다.")
@@ -181,7 +180,9 @@ class AccountServiceTest {
         Account updatedAccount = accountRepository.findById(initialAccount.getId()).get();
 
         // then
-        assertThat(updatedAccount).isNotNull();
+        assertThat(updatedAccount.getId()).isEqualTo(initialAccount.getId());
+        assertThat(updatedAccount.getPhoneNumber()).isEqualTo(updateAccountDto.getPhoneNumber());
+        assertThat(updatedAccount.getPassword()).isEqualTo(updateAccountDto.getPassword());
     }
 
     @DisplayName("존재하지 않는 계정을 수정하면 에러가 발생한다.")
@@ -197,17 +198,41 @@ class AccountServiceTest {
 
         // when
         // then
-        assertThrows(NoResultException.class,() -> accountService.updateAccount(accountId, updateAccountDto));
+        assertThatThrownBy(() -> accountService.updateAccount(accountId, updateAccountDto))
+                .isInstanceOf(NoResultException.class);
     }
 
-    @DisplayName("존재하지 않는 계정을 삭제하면 에러가 발생한다.")
+    @DisplayName("중복된 휴대폰 번호로 수정한다.")
     @Test
-    void deleteAccountByNotExistId() {
+    void updateAccountByDuplicatedPhoneNumber() {
         // given
-        Long accountId = 10000L;
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+        Account updateAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+
+        accountRepository.save(initialAccount);
+        accountRepository.save(updateAccount);
+
+        UpdateAccountDto updateAccountDto = UpdateAccountDto.builder()
+                .phoneNumber(initialAccount.getPhoneNumber())
+                .password(faker.internet().password())
+                .build();
 
         // when
-        assertThrows(NoResultException.class,() -> accountService.deleteAccountById(accountId));
+        // then
+        Assertions.assertThrows(UniqueConstraintViolationException.class, () -> {
+            accountService.updateAccount(updateAccount.getId(), updateAccountDto);
+            accountRepository.flush();
+        });
     }
 
     @DisplayName("계정을 삭제한다.")
@@ -230,6 +255,16 @@ class AccountServiceTest {
         Optional<Account> deletedAccount = accountRepository.findById(initialAccount.getId());
 
         // then
-        assertThat(deletedAccount.isEmpty()).isTrue();
+        assertThat(deletedAccount).isEmpty();
+    }
+
+    @DisplayName("존재하지 않는 계정을 삭제하면 에러가 발생한다.")
+    @Test
+    void deleteAccountByNotExistId() {
+        // given
+        Long accountId = 10000L;
+
+        // when
+        Assertions.assertThrows(NoResultException.class,() -> accountService.deleteAccountById(accountId));
     }
 }

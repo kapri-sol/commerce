@@ -16,7 +16,7 @@ public class AccountController {
     private final AccountService accountService;
 
     @GetMapping("{id}")
-    FindAccountResponse findAccount(@PathVariable("id") Long accountId) {
+    public FindAccountResponse findAccount(@PathVariable("id") Long accountId) {
         Account account = accountService.findAccountById(accountId);
         return FindAccountResponse.builder()
                 .email(account.getEmail())
@@ -26,7 +26,7 @@ public class AccountController {
     }
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    CreateAccountResponse createAccount(@RequestBody @Valid CreateAccountDto createAccountDto) {
+    public CreateAccountResponse createAccount(@RequestBody @Valid CreateAccountDto createAccountDto) {
         Long accountId = accountService.createAccount(createAccountDto);
         return CreateAccountResponse.builder()
                 .accountId(accountId)
@@ -35,13 +35,13 @@ public class AccountController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping("{id}")
-    void  updateAccount(@PathVariable("id") Long accountId, @RequestBody UpdateAccountDto updateAccountDto) {
+    public void  updateAccount(@PathVariable("id") Long accountId, @RequestBody UpdateAccountDto updateAccountDto) {
         accountService.updateAccount(accountId, updateAccountDto);
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{id}")
-    void deleteAccount(@PathVariable("id") Long accountId) {
+    public void deleteAccount(@PathVariable("id") Long accountId) {
         accountService.deleteAccountById(accountId);
     }
 }

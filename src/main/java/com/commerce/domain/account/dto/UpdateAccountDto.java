@@ -1,11 +1,11 @@
 package com.commerce.domain.account.dto;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
-@Data
+@Getter
 public class UpdateAccountDto {
     String phoneNumber;
     String password;

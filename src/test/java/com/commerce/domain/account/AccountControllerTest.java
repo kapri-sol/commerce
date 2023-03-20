@@ -1,11 +1,9 @@
 package com.commerce.domain.account;
 
 import com.commerce.domain.account.dto.CreateAccountDto;
-import com.commerce.domain.account.dto.FindAccountResponse;
 import com.commerce.domain.account.dto.UpdateAccountDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +11,12 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.*;
 import static com.epages.restdocs.apispec.ResourceSnippetParameters.*;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -35,8 +32,7 @@ class AccountControllerTest {
 
     Faker faker = new Faker();
 
-    @Rollback(value = true)
-    @DisplayName("GET OK")
+    @DisplayName("GET - Ok")
     @Test
     void findAccount() throws Exception {
         // given
@@ -49,21 +45,17 @@ class AccountControllerTest {
                         .build()
         );
 
-        FindAccountResponse findAccountResponse = FindAccountResponse.builder()
-                .username(initAccount.getUsername())
-                .email(initAccount.getEmail())
-                .phoneNumber(initAccount.getPhoneNumber())
-                .build();
-
         // when
         mvc.perform(get("/accounts/" + initAccount.getId()))
                 // then
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().json(objectMapper.writeValueAsString(findAccountResponse)))
+                .andExpect(jsonPath("email", is(initAccount.getEmail())))
+                .andExpect(jsonPath("phoneNumber", is(initAccount.getPhoneNumber())))
+                .andExpect(jsonPath("username", is(initAccount.getUsername())))
                 .andDo(
                         document(
-                                "account/get-ok",
+                                "account/get/ok",
                                 builder()
                                         .tag("GET")
                                         .responseFields(
@@ -75,7 +67,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("GET NotFound")
+    @DisplayName("GET - NotFound")
     @Test
     void findAccountByNonExistId() throws Exception {
         // given
@@ -83,11 +75,11 @@ class AccountControllerTest {
         mvc.perform(get("/accounts/" + 1000))
                 // then
                 .andExpect(status().isNotFound())
-                .andDo(document("account/get-not-found")
+                .andDo(document("account/get/not-found")
                 );
     }
 
-    @DisplayName("POST Created")
+    @DisplayName("POST - Created")
     @Test
     void createAccount() throws Exception {
         // given
@@ -106,7 +98,7 @@ class AccountControllerTest {
                 // then
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.accountId", Matchers.notNullValue(Long.class)))
+                .andExpect(jsonPath("accountId", notNullValue(Long.class)))
                 .andDo(
                         document("account/post/created",
                                 builder()
@@ -123,7 +115,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("POST BadRequest[ empty email ]")
+    @DisplayName("POST - BadRequest ( empty email )")
     @Test
     void createAccountByEmptyEmail() throws Exception {
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
@@ -140,9 +132,9 @@ class AccountControllerTest {
         )
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.field",  Matchers.is("email")))
-                .andExpect(jsonPath("$.message", Matchers.notNullValue(String.class)))
-                .andExpect(jsonPath("$.code", Matchers.notNullValue()))
+                .andExpect(jsonPath("field",  is("email")))
+                .andExpect(jsonPath("message", notNullValue(String.class)))
+                .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/bad-request/empty/email",
                                 builder()
@@ -157,7 +149,7 @@ class AccountControllerTest {
 
     }
 
-    @DisplayName("POST BadRequest : [ empty phoneNumber ]")
+    @DisplayName("POST - BadRequest ( empty phoneNumber )")
     @Test
     void createAccountByEmptyPhoneNumber() throws Exception {
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
@@ -174,9 +166,9 @@ class AccountControllerTest {
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.field",  Matchers.is("phoneNumber")))
-                .andExpect(jsonPath("$.message", Matchers.notNullValue(String.class)))
-                .andExpect(jsonPath("$.code", Matchers.notNullValue()))
+                .andExpect(jsonPath("field",  is("phoneNumber")))
+                .andExpect(jsonPath("message", notNullValue(String.class)))
+                .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/bad-request/empty/phone-number",
                                 builder()
@@ -190,7 +182,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("POST BadRequest [ empty username ]")
+    @DisplayName("POST - BadRequest ( empty username )")
     @Test
     void createAccountByEmptyUsername() throws Exception {
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
@@ -207,9 +199,9 @@ class AccountControllerTest {
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.field",  Matchers.is("username")))
-                .andExpect(jsonPath("$.message", Matchers.notNullValue(String.class)))
-                .andExpect(jsonPath("$.code", Matchers.notNullValue()))
+                .andExpect(jsonPath("field",  is("username")))
+                .andExpect(jsonPath("message", notNullValue(String.class)))
+                .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/bad-request/empty/username",
                                 builder()
@@ -223,7 +215,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("POST BadRequest [ empty password ]")
+    @DisplayName("POST - BadRequest ( empty password )")
     @Test
     void createAccountByEmptyPassword() throws Exception {
         CreateAccountDto createAccountDto = CreateAccountDto.builder()
@@ -254,7 +246,7 @@ class AccountControllerTest {
     }
 
 
-    @DisplayName("POST Conflict [ duplicated username ]")
+    @DisplayName("POST - Conflict ( duplicated username )")
     @Test
     void createAccountByDuplicatedUsername() throws Exception {
         Account initialAccount = Account.builder()
@@ -280,9 +272,9 @@ class AccountControllerTest {
                 )
                 .andExpect(status().isConflict())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.field",  Matchers.is("username")))
-                .andExpect(jsonPath("$.message", Matchers.notNullValue(String.class)))
-                .andExpect(jsonPath("$.code", Matchers.notNullValue()))
+                .andExpect(jsonPath("field",  is("username")))
+                .andExpect(jsonPath("message", notNullValue(String.class)))
+                .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/conflict/duplicated/username",
                                 builder()
@@ -296,7 +288,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("POST Conflict [ duplicated email ]")
+    @DisplayName("POST - Conflict ( duplicated email )")
     @Test
     void createAccountByDuplicatedEmail() throws Exception {
         Account initialAccount = Account.builder()
@@ -322,9 +314,9 @@ class AccountControllerTest {
                 )
                 .andExpect(status().isConflict())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.field",  Matchers.is("email")))
-                .andExpect(jsonPath("$.message", Matchers.notNullValue(String.class)))
-                .andExpect(jsonPath("$.code", Matchers.notNullValue()))
+                .andExpect(jsonPath("field",  is("email")))
+                .andExpect(jsonPath("message", notNullValue(String.class)))
+                .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/conflict/duplicated/email",
                                 builder()
@@ -338,7 +330,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("POST Conflict [ duplicated phoneNumber ]")
+    @DisplayName("POST - Conflict ( duplicated phoneNumber )")
     @Test
     void createAccountByDuplicatedPhoneNumber() throws Exception {
         Account initialAccount = Account.builder()
@@ -358,17 +350,17 @@ class AccountControllerTest {
                 .build();
 
         mvc.perform(
-                        post("/accounts/post/conflict/duplicated/phone-number")
+                        post("/accounts")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(createAccountDto))
                 )
                 .andExpect(status().isConflict())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.field",  Matchers.is("phoneNumber")))
-                .andExpect(jsonPath("$.message", Matchers.notNullValue(String.class)))
-                .andExpect(jsonPath("$.code", Matchers.notNullValue()))
+                .andExpect(jsonPath("field",  is("phoneNumber")))
+                .andExpect(jsonPath("message", notNullValue(String.class)))
+                .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
-                        document("account",
+                        document("account/post/conflict/duplicated/phone-number",
                                 builder()
                                         .requestFields(
                                                 fieldWithPath("username").description("유저 아이디"),
@@ -380,7 +372,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("PATCH NoContent")
+    @DisplayName("PATCH - NoContent")
     @Test
     void updateAccount() throws Exception {
         Account initialAccount = Account.builder()
@@ -390,7 +382,7 @@ class AccountControllerTest {
                 .password(faker.internet().password())
                 .build();
 
-        initialAccount = accountRepository.save(initialAccount);
+        accountRepository.save(initialAccount);
 
         UpdateAccountDto updateAccountDto = UpdateAccountDto.builder()
                 .phoneNumber(initialAccount.getPhoneNumber())
@@ -414,7 +406,52 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("PATCH NotFound")
+    @DisplayName("PATCH - Conflict ( duplicated phoneNumber )")
+    @Test
+    void updateAccountByDuplicatedPhoneNumber() throws Exception {
+        Account initialAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+
+        Account updateAccount = Account.builder()
+                .username(faker.name().username())
+                .email(faker.internet().emailAddress())
+                .phoneNumber(faker.phoneNumber().phoneNumber())
+                .password(faker.internet().password())
+                .build();
+
+        initialAccount = accountRepository.save(initialAccount);
+        updateAccount = accountRepository.save(updateAccount);
+
+        UpdateAccountDto updateAccountDto = UpdateAccountDto.builder()
+                .phoneNumber(initialAccount.getPhoneNumber())
+                .password(faker.internet().password())
+                .build();
+
+        mvc.perform(
+                        patch("/accounts/" + updateAccount.getId())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateAccountDto))
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("code", notNullValue()))
+                .andExpect(jsonPath("field", is("phoneNumber")))
+                .andExpect(jsonPath("message", notNullValue()))
+                .andDo(
+                        document("account/patch/not-found",
+                                builder()
+                                        .requestFields(
+                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                                fieldWithPath("password").description("비밀번호")
+                                        )
+                        )
+                );
+    }
+
+    @DisplayName("PATCH - NotFound")
     @Test
     void updateAccountByNotExistId() throws Exception {
         long accountId = 10000L;
@@ -441,7 +478,7 @@ class AccountControllerTest {
                 );
     }
 
-    @DisplayName("DELETE NoContent")
+    @DisplayName("DELETE - NoContent")
     @Test()
     void deleteAccount() throws Exception {
         Account initialAccount = Account.builder()
@@ -454,12 +491,15 @@ class AccountControllerTest {
         initialAccount = accountRepository.save(initialAccount);
 
         mvc.perform(
-                delete("/accounts/delete/no-content" + initialAccount.getId())
+                delete("/accounts/" + initialAccount.getId())
                 )
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNoContent())
+                .andDo(
+                        document("account/delete/no-content")
+                );
     }
 
-    @DisplayName("DELETE NotFound")
+    @DisplayName("DELETE - NotFound")
     @Test()
     void deleteAccountByNotExistId() throws Exception {
         long accountId = 10000L;
