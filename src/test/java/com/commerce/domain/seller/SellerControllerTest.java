@@ -2,6 +2,7 @@ package com.commerce.domain.seller;
 
 import com.commerce.domain.seller.dto.CreateSellerDto;
 import com.commerce.domain.seller.dto.UpdateSellerDto;
+import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.*;
-import static com.epages.restdocs.apispec.ResourceSnippetParameters.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
@@ -39,17 +39,23 @@ class SellerControllerTest {
                 .name(faker.name().fullName())
                 .address(faker.address().fullAddress())
                 .build();
+
         sellerRepository.save(seller);
+
         // when
-        mvc.perform(get("/sellers/" + seller.getId()))
+        mvc.perform(get("/sellers/{sellerId}", seller.getId()))
                 // then
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("name", is(seller.getName())))
                 .andExpect(jsonPath("address", is(seller.getAddress())))
                 .andDo(
                         document("seller/get/ok",
-                                builder().requestFields(
-                                        fieldWithPath("username").description("이름"),
+                                resourceDetails()
+                                        .tag("seller")
+                                        .description("판매자를 검색한다.")
+                                        .responseSchema(new Schema("FindSellerResponse")),
+                                responseFields(
+                                        fieldWithPath("name").description("이름"),
                                         fieldWithPath("address").description("주소")
                                 )
                         )
@@ -63,10 +69,10 @@ class SellerControllerTest {
         long sellerId = 1000L;
 
         // when
-        mvc.perform(get("/sellers/" + sellerId))
+        mvc.perform(get("/sellers/{sellerId}", sellerId))
                 // then
                 .andExpect(status().isNotFound())
-                .andDo(document("seller/get/not-found"));
+                .andDo(document("seller/get/not-found", resourceDetails().tag("seller")));
     }
 
     @DisplayName("POST - Created")
@@ -77,6 +83,7 @@ class SellerControllerTest {
                 .name(faker.name().fullName())
                 .address(faker.address().fullAddress())
                 .build();
+
         // when
         mvc.perform(
                 post("/sellers")
@@ -88,14 +95,18 @@ class SellerControllerTest {
                 .andExpect(jsonPath("sellerId" , notNullValue(Long.class)))
                 .andDo(
                         document("seller/post/created",
-                                builder()
-                                        .requestFields(
-                                            fieldWithPath("name").description("이름"),
-                                            fieldWithPath("address").description("주소")
-                                        )
-                                        .responseFields(
-                                                fieldWithPath("sellerId").description("판매자 고유값")
-                                        )
+                                resourceDetails()
+                                        .tag("seller")
+                                        .description("판매자를 생성한다.")
+                                        .requestSchema(new Schema("CreateSellerDto"))
+                                        .responseSchema(new Schema("CreateSellerResponse")),
+                                requestFields(
+                                        fieldWithPath("name").description("이름"),
+                                        fieldWithPath("address").description("주소")
+                                ),
+                                responseFields(
+                                        fieldWithPath("sellerId").description("판매자 고유값")
+                                )
                         )
                 );
     }
@@ -116,17 +127,24 @@ class SellerControllerTest {
                 )
                 // then
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("code" , notNullValue(String.class)))
                 .andExpect(jsonPath("field" , is("name")))
+                .andExpect(jsonPath("message" , notNullValue(String.class)))
                 .andDo(
                         document("seller/post/bad-request/empty/name",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("name").description("이름"),
-                                                fieldWithPath("address").description("주소")
-                                        )
-                                        .responseFields(
-                                                fieldWithPath("field").description("필드")
-                                        )
+                                resourceDetails()
+                                        .tag("seller")
+                                        .requestSchema(new Schema("CreateSellerDto") )
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("name").description("이름"),
+                                        fieldWithPath("address").description("주소")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -139,6 +157,7 @@ class SellerControllerTest {
                 .name(faker.name().fullName())
                 .address("")
                 .build();
+
         // when
         mvc.perform(
                         post("/sellers")
@@ -147,19 +166,24 @@ class SellerControllerTest {
                 )
                 // then
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("code" , notNullValue(String.class)))
                 .andExpect(jsonPath("field" , is("address")))
+                .andExpect(jsonPath("message" , notNullValue(String.class)))
                 .andDo(
                         document("seller/post/bad-request/empty/address",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("name").description("이름"),
-                                                fieldWithPath("address").description("주소")
-                                        )
-                                        .responseFields(
-                                                fieldWithPath("code").description("에러 코드"),
-                                                fieldWithPath("message").description("에러 메세지"),
-                                                fieldWithPath("field").description("에러 필드")
-                                        )
+                                resourceDetails()
+                                        .tag("seller")
+                                        .requestSchema(new Schema("CreateSellerDto") )
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("name").description("이름"),
+                                        fieldWithPath("address").description("주소")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("message").description("에러 메세지"),
+                                        fieldWithPath("field").description("에러 필드")
+                                )
                         )
                 );
     }
@@ -172,6 +196,7 @@ class SellerControllerTest {
                 .name(faker.name().fullName())
                 .address(faker.address().fullAddress())
                 .build();
+
         sellerRepository.save(seller);
 
         UpdateSellerDto updateSellerDto = UpdateSellerDto.builder()
@@ -181,7 +206,7 @@ class SellerControllerTest {
 
         // when
         mvc.perform(
-                        patch("/sellers/" + seller.getId())
+                        patch("/sellers/{sellerId}", seller.getId())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateSellerDto))
                 )
@@ -189,11 +214,14 @@ class SellerControllerTest {
                 .andExpect(status().isNoContent())
                 .andDo(
                         document("seller/patch/no-content",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("name").description("이름"),
-                                                fieldWithPath("address").description("주소")
-                                        )
+                                resourceDetails()
+                                        .tag("seller")
+                                        .description("판매자 정보를 수정한다.")
+                                        .requestSchema(new Schema("UpdateSellerDto")),
+                                requestFields(
+                                        fieldWithPath("name").description("이름"),
+                                        fieldWithPath("address").description("주소")
+                                )
                         )
                 );
     }
@@ -211,14 +239,14 @@ class SellerControllerTest {
 
         // when
         mvc.perform(
-                        patch("/sellers/" + sellerId)
+                        patch("/sellers/{sellerId}", sellerId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateSellerDto))
                 )
                 // then
                 .andExpect(status().isNotFound())
                 .andDo(
-                        document("seller/patch/not-found")
+                        document("seller/patch/not-found", resourceDetails().tag("seller"))
                 );
     }
 
@@ -230,6 +258,7 @@ class SellerControllerTest {
                 .name(faker.name().fullName())
                 .address(faker.address().fullAddress())
                 .build();
+
         sellerRepository.save(seller);
 
         UpdateSellerDto updateSellerDto = UpdateSellerDto.builder()
@@ -239,23 +268,77 @@ class SellerControllerTest {
 
         // when
         mvc.perform(
-                        patch("/sellers/" + seller.getId())
+                        patch("/sellers/{sellerId}", seller.getId())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateSellerDto))
                 )
                 // then
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("field" , is("name")))
+                .andExpect(jsonPath("code" , notNullValue(String.class)))
+                .andExpect(jsonPath("message" , notNullValue(String.class)))
                 .andDo(
                         document("seller/patch/bad-request/empty/name",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("name").description("이름"),
-                                                fieldWithPath("address").description("주소")
-                                        )
-                                        .responseFields(
-                                                fieldWithPath("field").description("필드")
-                                        )
+                                resourceDetails()
+                                        .tag("seller")
+                                        .requestSchema(new Schema("UpdateSellerDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("name").description("이름"),
+                                        fieldWithPath("address").description("주소")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
+                        )
+                );
+    }
+
+    @DisplayName("PATCH - BadRequest ( empty address )")
+    @Test
+    void updateSellerByEmptyAddress() throws Exception {
+        // given
+        Seller seller = Seller.builder()
+                .name(faker.name().fullName())
+                .address(faker.address().fullAddress())
+                .build();
+
+        sellerRepository.save(seller);
+
+        UpdateSellerDto updateSellerDto = UpdateSellerDto.builder()
+                .name(faker.name().fullName())
+                .address(faker.address().fullAddress())
+                .address("")
+                .build();
+
+        // when
+        mvc.perform(
+                        patch("/sellers/{sellerId}", seller.getId())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateSellerDto))
+                )
+                // then
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("field" , is("address")))
+                .andExpect(jsonPath("code" , notNullValue(String.class)))
+                .andExpect(jsonPath("message" , notNullValue(String.class)))
+                .andDo(
+                        document("seller/patch/bad-request/empty/name",
+                                resourceDetails()
+                                        .tag("seller")
+                                        .requestSchema(new Schema("UpdateSellerDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("name").description("이름"),
+                                        fieldWithPath("address").description("주소")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -272,12 +355,17 @@ class SellerControllerTest {
 
         // when
         mvc.perform(
-                        delete("/sellers/" + seller.getId())
+                        delete("/sellers/{sellerId}", seller.getId())
                 )
                 // then
                 .andExpect(status().isNoContent())
                 .andDo(
-                        document("seller/delete/no-content")
+                        document(
+                                "seller/delete/no-content",
+                                resourceDetails()
+                                        .tag("seller")
+                                        .description("판매자를 삭제한다.")
+                        )
                 );
 
     }
@@ -290,12 +378,12 @@ class SellerControllerTest {
 
         // when
         mvc.perform(
-                        delete("/sellers/" + sellerId)
+                        delete("/sellers/{sellerId}", sellerId)
                 )
                 // then
                 .andExpect(status().isNotFound())
                 .andDo(
-                        document("seller/delete/not-found")
+                        document("seller/delete/not-found", resourceDetails().tag("seller"))
                 );
     }
 }

@@ -27,12 +27,12 @@ public class Product extends BaseEntity {
     private Boolean deleted = false;
 
     @Builder
-    public Product(Long id, Seller seller, String title, String description, String image, Integer price, Integer stockQuantity) {
-        if(stockQuantity <= 0) {
-            throw new IllegalArgumentException("");
+    public Product(Seller seller, String title, String description, String image, Integer price, Integer stockQuantity) {
+
+        if (stockQuantity <= 0) {
+            throw new IllegalArgumentException("stockQuantity must be bigger than 0");
         }
 
-        this.id = id;
         this.seller = seller;
         this.title = title;
         this.description = description;
@@ -70,6 +70,11 @@ public class Product extends BaseEntity {
     }
 
     public void decreaseQuantity(Integer quantity) {
+
+        if (this.stockQuantity - quantity < 0) {
+           throw new IllegalStateException("stockQuantity is Insufficient");
+        }
+
         this.stockQuantity -= quantity;
     }
 }

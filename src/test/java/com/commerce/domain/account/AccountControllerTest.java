@@ -2,6 +2,7 @@ package com.commerce.domain.account;
 
 import com.commerce.domain.account.dto.CreateAccountDto;
 import com.commerce.domain.account.dto.UpdateAccountDto;
+import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +16,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.*;
-import static com.epages.restdocs.apispec.ResourceSnippetParameters.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
@@ -46,7 +46,7 @@ class AccountControllerTest {
         );
 
         // when
-        mvc.perform(get("/accounts/" + initAccount.getId()))
+        mvc.perform(get("/accounts/{accountId}", initAccount.getId()))
                 // then
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -56,13 +56,14 @@ class AccountControllerTest {
                 .andDo(
                         document(
                                 "account/get/ok",
-                                builder()
-                                        .tag("GET")
-                                        .responseFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호")
-                                        )
+                                resourceDetails().tag("account")
+                                        .responseSchema(new Schema("FindAccountResponse"))
+                                        .description("계정 정보를 조회한다."),
+                                responseFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호")
+                                )
                         )
                 );
     }
@@ -71,11 +72,17 @@ class AccountControllerTest {
     @Test
     void findAccountByNonExistId() throws Exception {
         // given
+        long accountId = 1000L;
+
         // when
-        mvc.perform(get("/accounts/" + 1000))
+        mvc.perform(get("/accounts/{accountId}", accountId))
                 // then
                 .andExpect(status().isNotFound())
-                .andDo(document("account/get/not-found")
+                .andDo(
+                        document("account/get/not-found",
+                                resourceDetails()
+                                        .tag("account")
+                        )
                 );
     }
 
@@ -101,14 +108,19 @@ class AccountControllerTest {
                 .andExpect(jsonPath("accountId", notNullValue(Long.class)))
                 .andDo(
                         document("account/post/created",
-                                builder()
-                                        .requestFields(
+                                resourceDetails()
+                                        .tag("account")
+                                        .description("계정을 생성한다.")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("CreateAccountResponse"))
+                                ,
+                                        requestFields(
                                                 fieldWithPath("username").description("유저 아이디"),
                                                 fieldWithPath("email").description("이메일"),
                                                 fieldWithPath("phoneNumber").description("휴대폰 번호"),
                                                 fieldWithPath("password").description("비밀번호")
-                                        )
-                                        .responseFields(
+                                        ),
+                                        responseFields(
                                                 fieldWithPath("accountId").description("계정 고유값")
                                         )
                                 )
@@ -137,14 +149,23 @@ class AccountControllerTest {
                 .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/bad-request/empty/email",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("Error"))
+                                ,
+                                requestFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
                                 )
+                        )
                 );
 
     }
@@ -171,13 +192,21 @@ class AccountControllerTest {
                 .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/bad-request/empty/phone-number",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -204,13 +233,21 @@ class AccountControllerTest {
                 .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/bad-request/empty/username",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -234,13 +271,21 @@ class AccountControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andDo(
                         document("account/post/bad-request/empty/password",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -277,13 +322,21 @@ class AccountControllerTest {
                 .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/conflict/duplicated/username",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -319,13 +372,21 @@ class AccountControllerTest {
                 .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/conflict/duplicated/email",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -361,13 +422,21 @@ class AccountControllerTest {
                 .andExpect(jsonPath("code", notNullValue()))
                 .andDo(
                         document("account/post/conflict/duplicated/phone-number",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("username").description("유저 아이디"),
-                                                fieldWithPath("email").description("이메일"),
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("CreateAccountDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("username").description("유저 아이디"),
+                                        fieldWithPath("email").description("이메일"),
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -390,18 +459,21 @@ class AccountControllerTest {
                 .build();
 
         mvc.perform(
-                        patch("/accounts/" + initialAccount.getId())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(updateAccountDto))
+                patch("/accounts/{accountId}", initialAccount.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateAccountDto))
                 )
                 .andExpect(status().isNoContent())
                 .andDo(
                         document("account/patch/no-content",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .description("계정을 수정한다.")
+                                        .requestSchema(new Schema("UpdateAccountDto")),
+                                requestFields(
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                )
                         )
                 );
     }
@@ -432,7 +504,7 @@ class AccountControllerTest {
                 .build();
 
         mvc.perform(
-                        patch("/accounts/" + updateAccount.getId())
+                        patch("/accounts/{accountId}", updateAccount.getId())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateAccountDto))
                 )
@@ -442,11 +514,19 @@ class AccountControllerTest {
                 .andExpect(jsonPath("message", notNullValue()))
                 .andDo(
                         document("account/patch/not-found",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("UpdateAccountDto"))
+                                        .responseSchema(new Schema("Error")),
+                                requestFields(
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                ),
+                                responseFields(
+                                        fieldWithPath("code").description("에러 코드"),
+                                        fieldWithPath("field").description("필드"),
+                                        fieldWithPath("message").description("메시지")
+                                )
                         )
                 );
     }
@@ -462,18 +542,20 @@ class AccountControllerTest {
                 .build();
 
         mvc.perform(
-                patch("/accounts/" + accountId)
+                patch("/accounts/{accountId}", accountId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateAccountDto))
                 )
                 .andExpect(status().isNotFound())
                 .andDo(
                         document("account/patch/not-found",
-                                builder()
-                                        .requestFields(
-                                                fieldWithPath("phoneNumber").description("휴대폰 번호"),
-                                                fieldWithPath("password").description("비밀번호")
-                                        )
+                                resourceDetails()
+                                        .tag("account")
+                                        .requestSchema(new Schema("UpdateAccountDto")),
+                                requestFields(
+                                        fieldWithPath("phoneNumber").description("휴대폰 번호"),
+                                        fieldWithPath("password").description("비밀번호")
+                                )
                         )
                 );
     }
@@ -491,11 +573,15 @@ class AccountControllerTest {
         initialAccount = accountRepository.save(initialAccount);
 
         mvc.perform(
-                delete("/accounts/" + initialAccount.getId())
+                delete("/accounts/{accountId}", initialAccount.getId())
                 )
                 .andExpect(status().isNoContent())
                 .andDo(
-                        document("account/delete/no-content")
+                        document("account/delete/no-content",
+                                resourceDetails()
+                                        .tag("account")
+                                        .description("계정을 삭제한다.")
+                        )
                 );
     }
 
@@ -505,8 +591,13 @@ class AccountControllerTest {
         long accountId = 10000L;
 
         mvc.perform(
-                        delete("/accounts/delete/not-found" + accountId)
+                        delete("/accounts/{accountId}", accountId)
                 )
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andDo(
+                        document("account/delete/not-found",
+                                resourceDetails().tag("account")
+                        )
+                );
     }
 }

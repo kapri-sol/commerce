@@ -4,8 +4,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Builder
+@NoArgsConstructor
 @Getter
 public class CreateSellerDto {
     @Size(min = 1, max = 255)
@@ -14,4 +15,10 @@ public class CreateSellerDto {
     @Size(min = 1, max = 255)
     @NotEmpty
     private String address;
+
+    @Builder
+    public CreateSellerDto(String name, String address) {
+        this.name = name;
+        this.address = address;
+    }
 }
