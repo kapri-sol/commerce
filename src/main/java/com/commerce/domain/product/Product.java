@@ -41,10 +41,6 @@ public class Product extends BaseEntity {
         this.stockQuantity = stockQuantity;
     }
 
-    public void setSeller(Seller seller) {
-        this.seller = seller;
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }

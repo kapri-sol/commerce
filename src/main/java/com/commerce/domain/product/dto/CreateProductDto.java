@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class CreateProductDto {
+    private Long sellerId;
     private String title;
     private String description;
     private String image;
@@ -14,7 +15,7 @@ public class CreateProductDto {
     private Integer stockQuantity;
 
     @Builder
-    public CreateProductDto(String title, String description, String image, Integer price, Integer stockQuantity) {
+    public CreateProductDto(Long sellerId, String title, String description, String image, Integer price, Integer stockQuantity) {
         this.title = title;
         this.description = description;
         this.image = image;
